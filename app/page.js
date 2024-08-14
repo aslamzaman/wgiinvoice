@@ -3,9 +3,11 @@ import React, { useState, useEffect, useRef } from "react";
 import Add from "@/components/bill/Add";
 import Edit from "@/components/bill/Edit";
 import Delete from "@/components/bill/Delete";
-import { formatedDateDot, inwordEnglish, localStorageGetItem, numberWithComma } from "@/lib/utils";
+import { formatedDate, formatedDateDot, inwordEnglish, localStorageGetItem, numberWithComma } from "@/lib/utils";
 import ReactToPrint from "react-to-print";
-import { BtnEn, BtnSubmit, TextDt, TextEn, TextNum } from "@/components/Form";
+import { BtnSubmit, TextDt, TextEn, TextNum } from "@/components/Form";
+
+
 
 const Home = () => {
   const [bills, setBills] = useState([]);
@@ -45,7 +47,7 @@ const Home = () => {
       }
     };
     load();
-    setDt(new Date());
+    setDt(formatedDate(new Date()));
   }, [msg]);
 
 
@@ -107,16 +109,16 @@ const Home = () => {
         <p className="w-full text-center text-blue-300">&nbsp;{waitMsg}&nbsp;</p>
         <p className="w-full text-sm text-center text-pink-600">&nbsp;{msg}&nbsp;</p>
       </div>
-
+ 
 
       <div className="w-full md:w-3/4 mx-auto border-2 p-4 shadow-md rounded-md">
         <div className="w-full">
-          <div className="col-span-3 overflow-auto">
+          <div className="overflow-auto">
             <table className="w-full border border-gray-200">
               <thead>
                 <tr className="w-full bg-gray-200">
                   <th className="text-start border-b border-gray-200 px-4 py-2 indent-2">Item</th>
-                  <th className="text-center border-b border-gray-200 px-4 py-2">Cartoon</th>
+                  <th className="text-center border-b border-gray-200 px-4 py-2">Crt</th>
                   <th className="text-center border-b border-gray-200 px-4 py-2">Than</th>
                   <th className="text-center border-b border-gray-200 px-4 py-2">Meter</th>
                   <th className="text-center border-b border-gray-200 px-4 py-2">Weight</th>
@@ -154,15 +156,15 @@ const Home = () => {
 
           <div className="w-full h-4 mt-10 bg-gray-300"></div>
 
-          <div className="mt-10">
+          <div className="p-4 mt-10 overflow-auto">
             <form onSubmit={submitHandler}>
               <div className="grid grid-cols-2 gap-2 my-1">
-                <TextEn Title="Name" Id="name" Change={nameChangeHandler} Value={name} Chr={150} />
-                <TextEn Title="Address" Id="address" Change={addressChangeHandler} Value={address} Chr={150} />
-                <TextEn Title="Phone" Id="phone" Change={phoneChangeHandler} Value={phone} Chr={150} />
-                <TextDt Title="Invoice Date" Id="dt" Change={dateChangeHandler} Value={dt} />
+                <TextEn Title="Company Name:" Id="name" Change={nameChangeHandler} Value={name} Chr={150} />
+                <TextEn Title="Company Address:" Id="address" Change={addressChangeHandler} Value={address} Chr={150} />
+                <TextEn Title="Company Phone No:" Id="phone" Change={phoneChangeHandler} Value={phone} Chr={150} />
+                <TextDt Title="Invoice Date:" Id="dt" Change={dateChangeHandler} Value={dt} />
                 <div className="col-span-2">
-                  <div className="grid grid-cols-3 gap-1">
+                  <div className="grid grid-cols-3 gap-2">
                     <TextNum Title="Deduct" Id="deduct" Change={deductChangeHandler} Value={deduct} />
                     <TextNum Title="Advance" Id="advance" Change={advanceChangeHandler} Value={advance} />
                     <TextEn Title="Shipment" Id="shipment" Change={shipmentChangeHandler} Value={shipment} Chr={150} />
@@ -170,17 +172,14 @@ const Home = () => {
                 </div>
               </div>
               <div>
-                <BtnSubmit Title="Create Print Button" Class="bg-blue-600 hover:bg-blue-800 text-white" />
+                <BtnSubmit Title="Create Button" Class="bg-blue-600 hover:bg-blue-800 text-white" />
                 {isPrintButton ?
-                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.25in 0.25in 0.5in;}}`} />
+                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} documentTitle={`${new Date().toISOString()}-wgi-invoice`} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.75in 0.5in 0.75in;}}`}  />
                   : null}
-              </div>
+              </div>             
             </form>
           </div>
-
-
         </div>
-
 
         <div className="overflow-auto hidden">
           <div ref={pageRef} className="w-full">
@@ -197,13 +196,13 @@ const Home = () => {
             <table className="w-full border border-gray-400">
               <thead>
                 <tr>
-                  <th className="border border-gray-400 uppercase text-start indent-2"> item</th>
-                  <th className="border border-gray-400 uppercase"> cartoon</th>
-                  <th className="border border-gray-400 uppercase"> than</th>
-                  <th className="border border-gray-400 uppercase"> meter</th>
-                  <th className="border border-gray-400 uppercase"> weight</th>
-                  <th className="border border-gray-400 uppercase"> rate</th>
-                  <th className="border border-gray-400 uppercase text-end"> <span className="mr-4">total</span></th>
+                  <th className="border border-gray-400 uppercase text-start indent-2"> ITEM</th>
+                  <th className="border border-gray-400 uppercase"> CRT</th>
+                  <th className="border border-gray-400 uppercase"> THN</th>
+                  <th className="border border-gray-400 uppercase"> MTR</th>
+                  <th className="border border-gray-400 uppercase"> WGT</th>
+                  <th className="border border-gray-400 uppercase"> RATE</th>
+                  <th className="border border-gray-400 uppercase text-end"> <span className="mr-4">TOTAL</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -238,11 +237,13 @@ const Home = () => {
                 </tr>
               </tbody>
             </table>
-            <div><span className="uppercase">Inword: {inwordEnglish(total)}</span></div>
+            <div><span className="uppercase">Inword: {inwordEnglish(total)} only</span></div>
             <p className="mt-16 text-xs">Thank you for kind cooperation.</p>
           </div>
         </div>
       </div>
+
+      <div id="footer" className="w-full h-[150px]"></div>
     </>
   );
 };

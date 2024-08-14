@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BtnSubmit, TextEn } from "@/components/Form";
+import { BtnSubmit, TextEn, TextNum } from "@/components/Form";
 import { localStorageAddItem } from "@/lib/utils";
 
 const Add = ({ message }) => {
@@ -8,7 +8,7 @@ const Add = ({ message }) => {
     const [than, setThan] = useState('');
     const [meter, setMeter] = useState('');
     const [weight, setWeight] = useState('');
-    const [rate, setRate] = useState('');   
+    const [rate, setRate] = useState('');
     const [show, setShow] = useState(false);
 
 
@@ -19,7 +19,7 @@ const Add = ({ message }) => {
         setThan('');
         setMeter('');
         setWeight('');
-        setRate('');        
+        setRate('');
     }
 
 
@@ -43,7 +43,7 @@ const Add = ({ message }) => {
             than: than,
             meter: meter,
             weight: weight,
-            rate: rate            
+            rate: rate
         }
     }
 
@@ -80,11 +80,11 @@ const Add = ({ message }) => {
                             <form onSubmit={saveHandler}>
                                 <div className="grid grid-cols-1 gap-4 my-4">
                                     <TextEn Title="Item" Id="item" Change={e => setItem(e.target.value)} Value={item} Chr={150} />
-                                    <TextEn Title="Cartoon" Id="cartoon" Change={e => setCartoon(e.target.value)} Value={cartoon} Chr={150} />
-                                    <TextEn Title="Than" Id="than" Change={e => setThan(e.target.value)} Value={than} Chr={150} />
-                                    <TextEn Title="Meter" Id="meter" Change={e => setMeter(e.target.value)} Value={meter} Chr={150} />
-                                    <TextEn Title="Weight" Id="weight" Change={e => setWeight(e.target.value)} Value={weight} Chr={150} />
-                                    <TextEn Title="Rate" Id="rate" Change={e => setRate(e.target.value)} Value={rate} Chr={150} />                                
+                                    <TextNum Title="Cartoon" Id="cartoon" Change={e => setCartoon(e.target.value)} Value={cartoon} />
+                                    <TextNum Title="Than" Id="than" Change={e => setThan(e.target.value)} Value={than} />
+                                    <TextNum Title="Meter" Id="meter" Change={e => setMeter(e.target.value)} Value={meter} />
+                                    <TextNum Title="Weight" Id="weight" Change={e => setWeight(e.target.value)} Value={weight} />
+                                    <TextNum Title="Rate" Id="rate" Change={e => setRate(e.target.value)} Value={rate} />
                                 </div>
                                 <div className="w-full flex justify-start">
                                     <input type="button" onClick={closeAddForm} value="Close" className="bg-pink-600 hover:bg-pink-800 text-white text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 cursor-pointer" />
@@ -104,4 +104,4 @@ const Add = ({ message }) => {
     )
 }
 export default Add;
-  
+
