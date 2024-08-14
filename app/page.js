@@ -96,6 +96,10 @@ const Home = () => {
 
   const submitHandler = (e) => {
     e.preventDefault();
+    if (bills.length < 1) {
+      setWaitMsg("No data to create invoice!");
+      return false;
+    }
     const totalTaka = parseFloat(subtotal) - parseFloat(deduct) - parseFloat(advance);
     setTotal(totalTaka);
     setIsPrintButton(true);
@@ -109,7 +113,7 @@ const Home = () => {
         <p className="w-full text-center text-blue-300">&nbsp;{waitMsg}&nbsp;</p>
         <p className="w-full text-sm text-center text-pink-600">&nbsp;{msg}&nbsp;</p>
       </div>
- 
+
 
       <div className="w-full md:w-3/4 mx-auto border-2 p-4 shadow-md rounded-md">
         <div className="w-full">
@@ -174,9 +178,9 @@ const Home = () => {
               <div>
                 <BtnSubmit Title="Create Button" Class="bg-blue-600 hover:bg-blue-800 text-white" />
                 {isPrintButton ?
-                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} documentTitle={`${new Date().toISOString()}-wgi-invoice`} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.75in 0.5in 0.75in;}}`}  />
+                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} documentTitle={`${new Date().toISOString()}-wgi-invoice`} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.75in 0.5in 0.75in;}}`} />
                   : null}
-              </div>             
+              </div>
             </form>
           </div>
         </div>
