@@ -27,6 +27,8 @@ const Home = () => {
 
   const [isPrintButton, setIsPrintButton] = useState(false);
 
+  const [invoiceNo, setInvoiceNo] = useState("");
+
 
   const pageRef = useRef(null);
 
@@ -48,6 +50,7 @@ const Home = () => {
     };
     load();
     setDt(formatedDate(new Date()));
+    setInvoiceNo(Date.now());
   }, [msg]);
 
 
@@ -178,7 +181,7 @@ const Home = () => {
               <div>
                 <BtnSubmit Title="Create Button" Class="bg-blue-600 hover:bg-blue-800 text-white" />
                 {isPrintButton ?
-                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} documentTitle={`${new Date().toISOString()}-wgi-invoice`} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.75in 0.5in 0.75in;}}`} />
+                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} documentTitle={`${invoiceNo}-wgi-invoice`} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.75in 0.5in 0.75in;}}`} />
                   : null}
               </div>
             </form>
@@ -189,7 +192,7 @@ const Home = () => {
           <div ref={pageRef} className="w-full">
             <p className="text-2xl font-bold uppercase text-center">Bill/invoice</p>
 
-            <p className="mt-6 text-end">Shipment: {shipment}<br />Invoice Date: {formatedDateDot(dt)} </p>
+            <p className="mt-6 text-end">Invoice No: {invoiceNo}<br />Invoice Date: {formatedDateDot(dt)}<br />Shipment: {shipment} </p>
 
             <p className="text-start">Company Name: <span className="font-bold uppercase">{name}</span><br />Company Address: {address}<br />Mobile/Phone: {phone}</p>
 
