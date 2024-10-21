@@ -1,56 +1,79 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import Add from "@/components/bill/Add";
-import Edit from "@/components/bill/Edit";
-import Delete from "@/components/bill/Delete";
+import Add from "@/components/invoice/Add";
+import Delete from "@/components/invoice/Delete";
+
+import jsPDF from "jspdf";
+
 import { formatedDate, formatedDateDot, inwordEnglish, localStorageGetItem, numberWithComma } from "@/lib/utils";
-import ReactToPrint from "react-to-print";
-import { BtnSubmit, TextDt, TextEn, TextNum } from "@/components/Form";
+import { BtnSubmit, TextDt, TextEn, TextNum, TextBnDisabled, DropdownEn, TextEnDisabled } from "@/components/Form";
+import { addDataToFirebase, getDataFromFirebase } from "@/lib/firebaseFunction";
+require("@/lib/fonts/Poppins-Bold-normal");
+require("@/lib/fonts/Poppins-Regular-normal");
+
 
 
 
 const Home = () => {
-  const [bills, setBills] = useState([]);
+  // Firebase------------------
+  const [dt, setDt] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [shipment, setShipment] = useState('');
+  const [payment, setPayment] = useState('');
+  const [deduct, setDeduct] = useState('');
+  //---------
+  const [customers, setCustomers] = useState([]);
+
+
+
+
+  //-- Local --------------------------------
+  const [localItems, setLocalItems] = useState([]);
+  const [msg, setMsg] = useState("Data ready");
   const [waitMsg, setWaitMsg] = useState("");
-  const [msg, setMsg] = useState("");
-
-  const [shipment, setShipment] = useState("");
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [dt, setDt] = useState("");
-
-  const [subtotal, setSubtotal] = useState("");
-  const [deduct, setDeduct] = useState("");
-  const [advance, setAdvance] = useState("");
-  const [total, setTotal] = useState("");
-
-  const [isPrintButton, setIsPrintButton] = useState(false);
-
-  const [invoiceNo, setInvoiceNo] = useState("");
 
 
-  const pageRef = useRef(null);
+  const [pointerEvent, setPointerEvent] = useState(true);
+
+
+
 
   useEffect(() => {
-    const load = () => {
+    const loadFirebase = async () => {
       setWaitMsg('Please Wait...');
       try {
-        const data = localStorageGetItem("bill");
-        const result = data.sort((a, b) => parseInt(b.id) > parseInt(a.id) ? 1 : -1);
-        setBills(result);
-        setWaitMsg('');
-        // weight, rate
-        const subtotalTk = result.reduce((t, c) => t + (parseFloat(c.weight) * parseFloat(c.rate)), 0);
-        setSubtotal(subtotalTk);
+        const responseCustomer = await getDataFromFirebase("customer");
+        setCustomers(responseCustomer);
+        //-----------
+
+        const inv = Date.now() / 60000;
+        setInvoiceNumber(Math.round(inv));
+        setDt(formatedDate(new Date()));
 
       } catch (error) {
         console.log(error);
       }
     };
-    load();
-    setDt(formatedDate(new Date()));
-    setInvoiceNo(Date.now());
+    loadFirebase();
+
+    //-------------------------------
+    const loadLocal = () => {
+      setWaitMsg('Please Wait...');
+      try {
+        const data = localStorageGetItem("localitem");
+        const result = data.sort((a, b) => parseInt(b.id) > parseInt(a.id) ? 1 : -1);
+        setLocalItems(result);
+        setWaitMsg('');
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    loadLocal();
+
+
+
+
   }, [msg]);
 
 
@@ -58,54 +81,165 @@ const Home = () => {
     setMsg(data);
   }
 
-  const nameChangeHandler = (e) => {
-    setName(e.target.value);
-    setIsPrintButton(false);
-  }
-
-  const addressChangeHandler = (e) => {
-    setAddress(e.target.value);
-    setIsPrintButton(false);
-  }
-
-  const phoneChangeHandler = (e) => {
-    setPhone(e.target.value);
-    setIsPrintButton(false);
-  }
-
-  const dateChangeHandler = (e) => {
-    setDt(e.target.value);
-    setIsPrintButton(false);
+  const createObject = () => {
+    const getLocalData = localStorageGetItem('localitem');
+    return {
+      dt: dt,
+      customerId: customerId,
+      invoiceNumber: invoiceNumber,
+      items: getLocalData,
+      shipment: shipment,
+      payment: payment,
+      deduct: deduct,
+      createdAt: new Date().toISOString()
+    }
   }
 
 
-  const deductChangeHandler = (e) => {
-    setDeduct(e.target.value);
-    setIsPrintButton(false);
-  }
+
+  const printHandler = () => {
+    setWaitMsg('Please Wait...');
 
 
-  const advanceChangeHandler = (e) => {
-    setAdvance(e.target.value);
-    setIsPrintButton(false);
-  }
+    setTimeout(() => {
+        const invoice = createObject();
+         console.log(invoice);
+
+        const doc = new jsPDF({
+            orientation: "p",
+            unit: "mm",
+            format: "a4",
+            putOnlyUsedFonts: true,
+            floatPrecision: 16
+        });
+
+const cusmerData = customers.find(customer=>customer.id=== customerId);
+
+        doc.setFont("Poppins-Bold", "bold");
+        doc.setFontSize(16);
+
+        doc.text(`BILL/INVOICE`, 105, 55, null, null, "center");
+        doc.setFont("Poppins-Regular", "normal");
+        doc.setFontSize(10);
+
+        doc.text(`Invoice No: ${invoice.invoiceNumber}`, 190, 65, null, null, "right");
+        doc.text(`Shipment No: ${invoice.shipment}`, 190, 70, null, null, "right");
+        doc.text(`Invoice Date: ${formatedDateDot(invoice.dt, true)}`, 190, 75, null, null, "right");
+
+        doc.setFont("Poppins-Bold", "bold");
+        doc.text(`${cusmerData.name}`, 20, 80, null, null, "left");
+        doc.setFont("Poppins-Regular", "normal");
+        doc.text(`${cusmerData.address}`, 20, 85, null, null, "left");
+        doc.text(`${cusmerData.contact}`, 20, 90, null, null, "left");
+        doc.setFontSize(7);
+        doc.text(`Print Data: ${formatedDateDot(new Date(),true)}`, 190, 92, null, null, "right");
+        doc.setFontSize(10);
+
+        doc.line(20, 95, 190, 95);
+        doc.line(20, 103, 190, 103);
+        doc.setFont("Poppins-Bold", "bold");
+        doc.text("Items", 23, 100, null, null, "left");
+        doc.text("CRT", 87, 100, null, null, "center");
+        doc.text("THN", 105, 100, null, null, "center");
+        doc.text("MTR", 123, 100, null, null, "center");
+        doc.text("WGT", 141, 100, null, null, "center");
+        doc.text("Rate", 159, 100, null, null, "center");
+        doc.text("Total", 187, 100, null, null, "right");
+        doc.setFont("Poppins-Regular", "normal");
+        let y = 108;
+        let subTotal = 0;
+        let items = invoice.items;
+
+        for (let i = 0; i < items.length; i++) {
+            const total = parseFloat(items[i].weight) * parseFloat(items[i].taka);
+            subTotal = subTotal + total;
 
 
-  const shipmentChangeHandler = (e) => {
-    setShipment(e.target.value);
-    setIsPrintButton(false);
-  }
+            doc.text(`${items[i].itemName}`, 23, y, null, null, "left");
+            doc.text(`${items[i].bale}`, 87, y, null, null, "center");
+            doc.text(`${items[i].than}`, 105, y, null, null, "center");
+            doc.text(`${items[i].meter}`, 123, y, null, null, "center");
+            doc.text(`${items[i].weight}`, 141, y, null, null, "center");
+            doc.text(`${items[i].taka}`, 159, y, null, null, "center");
+            doc.text(`${numberWithComma(total)}`, 187, y, null, null, "right");
+            y = y + 5;
+        }
+
+        doc.line(20, y - 3.5, 190, y - 3.5); // Horizontal line
+        // Subtotal 
+        doc.text("Subtotal", 23, y, null, null, "left");
+        doc.text(`${subTotal.toLocaleString("en-IN")}`, 187, y, null, null, "right");
+
+        // Deduct
+        doc.text("Deduct", 23, y + 5, null, null, "left");
+        doc.text(`${parseInt(invoice.deduct).toLocaleString("en-IN")}`, 187, y + 5, null, null, "right");
+
+        // Advance
+        doc.text("Advance Payment", 23, y + 10, null, null, "left");
+        doc.text(`${parseInt(invoice.payment).toLocaleString("en-IN")}`, 187, y + 10, null, null, "right");
+
+        doc.line(20, y + 11.5, 190, y + 11.5); // Horizontal line
+
+        // Amount to be pay
+        doc.setFont("Poppins-Bold", "bold");
+        doc.text("Amount to pay", 23, y + 15, null, null, "left");
+        const gt = subTotal - (parseFloat(invoice.deduct) + parseFloat(invoice.payment));
+        doc.text(`${gt.toLocaleString("en-IN")}`, 187, y + 15, null, null, "right");
+        doc.line(20, y + 16.5, 190, y + 16.5); // Horizontal line
 
 
-  const submitHandler = (e) => {
+        doc.setFont("Poppins-Regular", "normal");
+        if (gt > 0) {
+            const tkString = parseInt(gt).toString();
+            doc.text(`INWORD: ${inwordEnglish(tkString).toUpperCase()} ONLY.`, 20, y + 22, null, null, "left");
+        }
+
+        doc.setFontSize(8);
+        doc.text("Thank you for your kind cooperation.", 20, y + 35, null, null, "left");
+
+        doc.line(20, 95, 20, y + 16.5); // Vertical Line
+        doc.line(190, 95, 190, y + 16.5); // Vertical Line
+
+
+        doc.line(78, 95, 78, y - 3.5); // Vertical Line
+        doc.line(96, 95, 96, y - 3.5); // Vertical Line
+        doc.line(114, 95, 114, y - 3.5); // Vertical Line
+        doc.line(132, 95, 132, y - 3.5); // Vertical Line
+        doc.line(150, 95, 150, y - 3.5); // Vertical Line
+        doc.line(168, 95, 168, y - 3.5); // Vertical Line
+
+        doc.save(`WGI_Invoice_${invoice.invoiceNo}_Created_${formatedDate(invoice.dt)}.pdf`);
+        setWaitMsg('');
+    }, 0);
+
+}
+
+
+
+
+
+
+  const submitHandler = async (e) => {
     e.preventDefault();
-    if (bills.length < 1) {
+    const getLocalData = localStorageGetItem('localitem');
+    if (getLocalData.length < 1) {
       setWaitMsg("No data to create invoice!");
       return false;
     }
-    const totalTaka = parseFloat(subtotal) - parseFloat(deduct) - parseFloat(advance);
-    setTotal(totalTaka);
-    setIsPrintButton(true);
+
+    try {
+      setPointerEvent(false);
+      const newObject = createObject();
+      // const msgInvoice = await addDataToFirebase("invoice", newObject);
+      // setMsg(msgInvoice);
+      printHandler();
+    } catch (error) {
+      console.error("Error saving invoice data:", error);
+    } finally {
+      //localStorage.removeItem('localitem');
+      setPointerEvent(true);
+    }
+
   }
 
 
@@ -124,14 +258,14 @@ const Home = () => {
             <table className="w-full border border-gray-200">
               <thead>
                 <tr className="w-full bg-gray-200">
-                  <th className="text-start border-b border-gray-200 px-4 py-2 indent-2">Item</th>
-                  <th className="text-center border-b border-gray-200 px-4 py-2">Crt</th>
-                  <th className="text-center border-b border-gray-200 px-4 py-2">Than</th>
+                  <th className="text-center border-b border-gray-200 px-4 py-2">Bale</th>
+                  <th className="text-center border-b border-gray-200 px-4 py-2">Itemname</th>
                   <th className="text-center border-b border-gray-200 px-4 py-2">Meter</th>
+                  <th className="text-center border-b border-gray-200 px-4 py-2">Taka</th>
+                  <th className="text-center border-b border-gray-200 px-4 py-2">Than</th>
                   <th className="text-center border-b border-gray-200 px-4 py-2">Weight</th>
-                  <th className="text-center border-b border-gray-200 px-4 py-2">Rate</th>
                   <th className="w-[100px] font-normal">
-                    <div className="w-full flex justify-end mt-1 pr-[3px] lg:pr-2">
+                    <div className="w-full flex justify-end mt-1 pr-[3px] lg:pr-2 font-normal">
                       <Add message={messageHandler} />
                     </div>
                   </th>
@@ -139,18 +273,17 @@ const Home = () => {
               </thead>
               <tbody>
                 {
-                  bills.length ? bills.map(bill => {
+                  localItems.length ? localItems.map(item => {
                     return (
-                      <tr className="border-b border-gray-200 hover:bg-gray-100" key={bill.id}>
-                        <td className="text-start py-2 px-4 indent-2">{bill.item}</td>
-                        <td className="text-center py-2 px-4">{bill.cartoon}</td>
-                        <td className="text-center py-2 px-4">{bill.than}</td>
-                        <td className="text-center py-2 px-4">{bill.meter}</td>
-                        <td className="text-center py-2 px-4">{bill.weight}</td>
-                        <td className="text-center py-2 px-4">{bill.rate}</td>
+                      <tr className="border-b border-gray-200 hover:bg-gray-100" key={item.id}>
+                        <td className="text-center py-2 px-4">{item.bale}</td>
+                        <td className="text-center py-2 px-4">{item.itemName}</td>
+                        <td className="text-center py-2 px-4">{item.meter}</td>
+                        <td className="text-center py-2 px-4">{item.taka}</td>
+                        <td className="text-center py-2 px-4">{item.than}</td>
+                        <td className="text-center py-2 px-4">{item.weight}</td>
                         <td className="flex justify-end items-center mt-1">
-                          <Edit message={messageHandler} id={bill.id} data={bills} />
-                          <Delete message={messageHandler} id={bill.id} data={bills} />
+                          <Delete message={messageHandler} id={item.id} data={item} />
                         </td>
                       </tr>
                     )
@@ -166,88 +299,23 @@ const Home = () => {
           <div className="p-4 mt-10 overflow-auto">
             <form onSubmit={submitHandler}>
               <div className="grid grid-cols-2 gap-2 my-1">
-                <TextEn Title="Company Name:" Id="name" Change={nameChangeHandler} Value={name} Chr={150} />
-                <TextEn Title="Company Address:" Id="address" Change={addressChangeHandler} Value={address} Chr={150} />
-                <TextEn Title="Company Phone No:" Id="phone" Change={phoneChangeHandler} Value={phone} Chr={150} />
-                <TextDt Title="Invoice Date:" Id="dt" Change={dateChangeHandler} Value={dt} />
-                <div className="col-span-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    <TextNum Title="Deduct" Id="deduct" Change={deductChangeHandler} Value={deduct} />
-                    <TextNum Title="Advance" Id="advance" Change={advanceChangeHandler} Value={advance} />
-                    <TextEn Title="Shipment" Id="shipment" Change={shipmentChangeHandler} Value={shipment} Chr={150} />
-                  </div>
-                </div>
+                <TextEnDisabled Title="InvoiceNumber" Id="invoiceNumber" Change={e => setInvoiceNumber(e.target.value)} Value={invoiceNumber} Chr={50} />
+                <DropdownEn Title="Customer" Id="customerId" Change={e => setCustomerId(e.target.value)} Value={customerId}>
+                  {customers.length ? customers.map(customer => <option value={customer.id} key={customer.id}>{customer.name}</option>) : null}
+                </DropdownEn>
+                <TextDt Title="Date" Id="dt" Change={e => setDt(e.target.value)} Value={dt} />
+                <TextEn Title="Shipment" Id="shipment" Change={e => setShipment(e.target.value)} Value={shipment} Chr={50} />
+                <TextNum Title="Payment" Id="payment" Change={e => setPayment(e.target.value)} Value={payment} />
+                <TextNum Title="Deduct" Id="deduct" Change={e => setDeduct(e.target.value)} Value={deduct} />
+
               </div>
-              <div>
+              <div className={`w-full mt-4 flex justify-start ${pointerEvent ? 'pointer-events-auto' : 'pointer-events-none'}`}>
                 <BtnSubmit Title="Create Button" Class="bg-blue-600 hover:bg-blue-800 text-white" />
-                {isPrintButton ?
-                  <ReactToPrint trigger={() => <button className="text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 bg-green-600 hover:bg-green-800 text-white cursor-pointer">Print Invoice</button>} documentTitle={`${invoiceNo}-wgi-invoice`} content={() => pageRef.current} pageStyle={`@media print{@page{size:A4 portrait; margin:2in 0.75in 0.5in 0.75in;}}`} />
-                  : null}
               </div>
             </form>
           </div>
         </div>
 
-        <div className="overflow-auto hidden">
-          <div ref={pageRef} className="w-full">
-            <p className="text-2xl font-bold uppercase text-center">Bill/invoice</p>
-
-            <p className="mt-6 text-end">Invoice No: {invoiceNo}<br />Invoice Date: {formatedDateDot(dt)}<br />Shipment: {shipment} </p>
-
-            <p className="text-start">Company Name: <span className="font-bold uppercase">{name}</span><br />Company Address: {address}<br />Mobile/Phone: {phone}</p>
-
-
-            <div className="text-end">
-              <span className="text-xs">Print Date: {formatedDateDot(new Date())}</span>
-            </div>
-            <table className="w-full border border-gray-400">
-              <thead>
-                <tr>
-                  <th className="border border-gray-400 uppercase text-start indent-2"> ITEM</th>
-                  <th className="border border-gray-400 uppercase"> CRT</th>
-                  <th className="border border-gray-400 uppercase"> THN</th>
-                  <th className="border border-gray-400 uppercase"> MTR</th>
-                  <th className="border border-gray-400 uppercase"> WGT</th>
-                  <th className="border border-gray-400 uppercase"> RATE</th>
-                  <th className="border border-gray-400 uppercase text-end"> <span className="mr-4">TOTAL</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {bills.length ? bills.map(bill => (
-                  // id, item, cartoon, than, meter, weight, rate
-                  <tr key={bill.id}>
-                    <td className="border border-gray-400 text-start indent-2">{bill.item}</td>
-                    <td className="border border-gray-400 text-center">{bill.cartoon}</td>
-                    <td className="border border-gray-400 text-center">{bill.than}</td>
-                    <td className="border border-gray-400 text-center">{bill.meter}</td>
-                    <td className="border border-gray-400 text-center">{bill.weight}</td>
-                    <td className="border border-gray-400 text-center">{bill.rate}</td>
-                    <td className="border border-gray-400 text-end"><span className="mr-4">{numberWithComma(bill.weight * bill.rate)}</span></td>
-                  </tr>
-                )) : null}
-                <tr>
-                  <td colSpan="6" className="border border-gray-400 text-start indent-2">Subtotal</td>
-                  <td className="border border-gray-400 text-end"><span className="mr-4">{numberWithComma(subtotal)}</span></td>
-                </tr>
-                <tr>
-                  <td colSpan="6" className="border border-gray-400 text-start indent-2">Deduct</td>
-                  <td className="border border-gray-400 text-end"><span className="mr-4">{numberWithComma(deduct)}</span></td>
-                </tr>
-                <tr>
-                  <td colSpan="6" className="border border-gray-400 text-start indent-2">Advance Payment</td>
-                  <td className="border border-gray-400 text-end"><span className="mr-4">{numberWithComma(advance)}</span></td>
-                </tr>
-
-                <tr>
-                  <td colSpan="6" className="font-bold border border-gray-400 text-start indent-2">Amount to pay</td>
-                  <td className="font-bold border border-gray-400 text-end"><span className="mr-4">{numberWithComma(total)}</span></td>
-                </tr>
-              </tbody>
-            </table>
-            <div><span className="uppercase">Inword: {inwordEnglish(total)} only</span></div>
-            <p className="mt-16 text-xs">Thank you for kind cooperation.</p>
-          </div>
-        </div>
       </div>
 
       <div id="footer" className="w-full h-[150px]"></div>

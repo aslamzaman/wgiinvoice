@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "file-saver": "^2.0.5",
-    "jspdf": "^2.5.1",
+    "firebase": "^10.14.1",
+    "jspdf": "^2.5.2",
     "mongoose": "^8.2.4",
     "next": "14.1.4",
     "react": "^18",
