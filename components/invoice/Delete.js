@@ -9,8 +9,8 @@ const Delete = ({ message, id, data }) => {
     const showDeleteForm = () => {
         setShow(true);
         try {
-            const { bale } = data;
-            setBale(bale);
+            const { itemName } = data;
+            setBale(itemName);
         }
         catch (err) {
             console.log(err);

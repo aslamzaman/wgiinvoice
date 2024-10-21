@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { BtnSubmit, TextEn } from "@/components/Form";
-import { localStorageAddItem } from "@/lib/utils";
+import { BtnSubmit, DropdownEn, TextEn, TextNum } from "@/components/Form";
+import { localStorageAddItem, sortArray } from "@/lib/utils";
+import { getDataFromFirebase } from "@/lib/firebaseFunction";
 
 const Add = ({ message }) => {
     const [bale, setBale] = useState('');
@@ -8,8 +9,11 @@ const Add = ({ message }) => {
     const [meter, setMeter] = useState('');
     const [taka, setTaka] = useState('');
     const [than, setThan] = useState('');
-    const [weight, setWeight] = useState('');   
+    const [weight, setWeight] = useState('');
     const [show, setShow] = useState(false);
+
+    //----------------------------
+    const [items, setItems] = useState([]);
 
 
     const resetVariables = () => {
@@ -18,13 +22,21 @@ const Add = ({ message }) => {
         setMeter('');
         setTaka('');
         setThan('');
-        setWeight('');        
+        setWeight('');
     }
 
 
-    const showAddForm = () => {
+    const showAddForm = async () => {
         setShow(true);
         resetVariables();
+        try {
+            const responseItem = await getDataFromFirebase('item');
+            const sortedIems = responseItem.sort((a, b) => sortArray(a.name.toUpperCase(), b.name.toUpperCase()));
+            setItems(sortedIems);
+        } catch (error) {
+            console.error('Failed to fetch delivery data:', error);
+        }
+
     }
 
 
@@ -41,7 +53,7 @@ const Add = ({ message }) => {
             meter: meter,
             taka: taka,
             than: than,
-            weight: weight            
+            weight: weight
         }
     }
 
@@ -76,13 +88,15 @@ const Add = ({ message }) => {
                         </div>
                         <div className="px-6 pb-6 text-black">
                             <form onSubmit={saveHandler}>
-                                <div className="grid grid-cols-1 gap-4 my-4">
-                                    <TextEn Title="Bale" Id="bale" Change={e => setBale(e.target.value)} Value={bale} Chr={150} />
-                                    <TextEn Title="ItemName" Id="itemName" Change={e => setItemName(e.target.value)} Value={itemName} Chr={150} />
-                                    <TextEn Title="Meter" Id="meter" Change={e => setMeter(e.target.value)} Value={meter} Chr={150} />
-                                    <TextEn Title="Taka" Id="taka" Change={e => setTaka(e.target.value)} Value={taka} Chr={150} />
-                                    <TextEn Title="Than" Id="than" Change={e => setThan(e.target.value)} Value={than} Chr={150} />
-                                    <TextEn Title="Weight" Id="weight" Change={e => setWeight(e.target.value)} Value={weight} Chr={150} />                                
+                                <div className="grid grid-cols-2 gap-4 my-4">
+                                    <DropdownEn Title="Item" Id="itemName" Change={e => setItemName(e.target.value)} Value={itemName}>
+                                        {items.length ? items.map(item => <option value={item.name} key={item.id}>{item.name}</option>) : null}
+                                    </DropdownEn>
+                                    <TextNum Title="Bale" Id="bale" Change={e => setBale(e.target.value)} Value={bale} />
+                                    <TextNum Title="Than" Id="than" Change={e => setThan(e.target.value)} Value={than} />
+                                    <TextNum Title="Meter" Id="meter" Change={e => setMeter(e.target.value)} Value={meter} />
+                                    <TextNum Title="Weight" Id="weight" Change={e => setWeight(e.target.value)} Value={weight} />
+                                    <TextNum Title="Taka" Id="taka" Change={e => setTaka(e.target.value)} Value={taka} />
                                 </div>
                                 <div className="w-full flex justify-start">
                                     <input type="button" onClick={closeAddForm} value="Close" className="bg-pink-600 hover:bg-pink-800 text-white text-center mt-3 mx-0.5 px-4 py-2 font-semibold rounded-md focus:ring-1 ring-blue-200 ring-offset-2 duration-300 cursor-pointer" />
@@ -102,4 +116,4 @@ const Add = ({ message }) => {
     )
 }
 export default Add;
-  
+
